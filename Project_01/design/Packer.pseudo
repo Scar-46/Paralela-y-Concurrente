@@ -1,0 +1,39 @@
+struct Packer 
+  requestMap
+end struct
+
+procedure consumeForever()
+  while true
+    data = dequeue()
+    if data is stop condition
+      stopPacks++
+      if stopPacks == sysconf(_SC_NPROCESSORS_ONLN)
+        produce(newVec)
+        break
+      end if
+    else
+      consume(data)
+    end if
+  end while
+end procedure
+
+procedure consume(data)
+  if data.requestSize > 1
+    if data.responseAdr in requestMap
+      requestMap[data.responseAdr].push(data)
+      if requestMap[data.responseAdr].size() == data.requestSize
+        produce(requestMap[data.responseAdr])
+      end if
+    else
+      newVec = new vector()
+      newVec.push(data)
+      requestMap[data.responseAdr] = newVec
+    end if
+  else if data.requestSize == 1
+    newVec = new vector()
+    newVec.push(data)
+    produce(newVec)
+  else
+  end if
+end procedure
+

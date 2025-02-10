@@ -1,0 +1,36 @@
+procedure calculateHeat(matrix: matrix of double, duration: double,
+  difusitivity: double, celdDimentions: double, sensitivity: double,
+  rows: int, colums: int, var state: int, threadCount: int): int
+  var
+    transcurredTime: int
+    stopCondition: boolean
+    matrixCopy: matrix of double
+  begin
+    transcurredTime := duration
+    state := 1
+    stopCondition := false
+    setLength(matrixCopy, rows, colums)
+    matrixCopy := matrix
+    while not stopCondition do
+      stopCondition := true
+      for i := 1 to rows -1 do
+        for j := 1 to colums -1 do
+          currentTemperature := matrix[i][j]
+          matrix[i][j] := matrix[i][j] +
+          (((duration*difusitivity)/(celdDimentions*celdDimentions))
+          * (matrixCopy[i-1][j]+matrixCopy[i][j+1]+matrixCopy[i+1][j]+
+          matrixCopy[i][j-1]-(4*matrixCopy[i][j])))
+          currentTemperature := abs(currentTemperature - matrix[i][j])
+          if currentTemperature > sensitivity then
+            stopCondition := false
+          end
+        end
+      end
+      if not stopCondition then
+        state := state + 1
+        transcurredTime := transcurredTime + duration
+        matrixCopy := matrix
+      end
+    end
+    return transcurredTime
+  end

@@ -1,0 +1,50 @@
+procedure consume(package)
+  for i = 0 to package.size
+    response.body << package[i].structData
+    delete package[i].structData
+    delete package[i]
+  end for
+  response.body
+  << "  </div>"
+  << "  <hr><p><a href=\"/\">Back</a></p>\n"
+  << "</html>\n"
+  response.send
+  delete response
+  delete package
+end procedure
+
+procedure setConsumingQueue(queue)
+  consumingQueue = queue
+end procedure
+
+procedure consumeForever()
+  while true
+    data = consumingQueue.dequeue
+    if data.size == 0
+      delete data
+      break
+    end if
+    consume(data)
+  end while
+end procedure
+
+procedure orderVector(vector)
+  for i = 0 to vector.size
+    min_idx = i
+    for j = i+1 to vector.size
+      if vector[j].requestPosition < vector[min_idx].requestPosition
+        min_idx = j
+      end if
+    end for
+    if min_idx != i
+      swap(vector[min_idx], vector[i])
+    end if
+  end for
+end procedure
+ 
+procedure swap(xp, yp)
+  temp = xp
+  xp = yp
+  yp = temp
+end procedure
+ 

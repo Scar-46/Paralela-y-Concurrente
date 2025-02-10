@@ -1,0 +1,29 @@
+procedure readMatrixFromBinaryStream(input)
+    read input.rows
+    read input.columns
+    for row = 0 to input.rows
+      for col = 0 to input.columns
+        read input.temperatures[row][col]
+    return input
+end procedure
+
+procedure writeMatrixToBinaryStream(output, matrix)
+    write matrix.rows
+    write matrix.columns
+    for row = 0 to matrix.rows
+      for col = 0 to matrix.columns
+        write matrix.temperatures[row][col]
+end procedure
+
+procedure readAllPlates(inputFileName)
+    input = open inputFileName
+    while input.good()
+      read plate.path
+      read plate.seconds
+      read plate.difu
+      read plate.dimension
+      read plate.sensitivity
+      if plate.path != ""
+        plates.push_back(plate)
+    return plates
+end procedure

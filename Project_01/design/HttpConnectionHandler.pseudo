@@ -1,0 +1,55 @@
+// Copyright 2023 OSCAR.FERNANDEZJIMENEZ@ucr.ac.cr
+
+struct HttpConnectionHandler
+  vector<HttpApp*>* applications
+end struct
+
+procedure run()
+  consumeForever()
+  return Success
+end procedure
+
+procedure consumeForever()
+  while true
+    data = dequeue()
+    if data == stopCondition
+      response = null
+      produce(response)
+      break
+    end if
+    consume(data)
+  end while
+end procedure
+
+procedure consume(data)
+  while true
+    Dynamic httpRequest = (data)
+    if httpRequest == null
+      delete httpRequest
+      break
+    end if
+    Dynamic httpResponse = (data)
+    handled = handleHttpRequest(httpRequest, httpResponse)
+    if !handled || version == "HTTP/1.0"
+      delete httpRequest
+      delete httpResponse
+      data.close()
+    end if
+  end while
+end procedure
+
+procedure handleHttpRequest(httpRequest, httpResponse)
+  return route(httpRequest, httpResponse)
+end procedure
+
+procedure route(httpRequest, httpResponse)
+  if httpRequest.getMethod() == "GET" && httpRequest.getURI() == "/"
+    handled = handleHttpRequest(httpRequest, httpResponse)
+    return handled
+  else if httpRequest.getMethod() == "GET" && httpRequest.getURI() != "/favicon.ico"
+    produce(data)
+    return true
+  else
+    return false
+  end if
+end procedure

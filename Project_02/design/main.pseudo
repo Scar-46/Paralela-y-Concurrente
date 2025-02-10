@@ -1,0 +1,56 @@
+
+
+procedure main(argc, argv[])
+  threadCount = 1
+  inputFileName = argv[1]
+  if argc >= 2
+    if argc == 3
+      threadCount = argv[2]
+    else if argc > 3
+      print "Error: invalid amount of arguments"
+      return EXIT_FAILURE
+    else
+      threadCount = get_max_threads()
+    end if
+    OUTPUTDIR = "output/"
+    plates = readAllPlates(inputFileName)
+    folderEnd = inputFileName.find_last_of("/")
+    folder = inputFileName.substr(0, folderEnd + 1)
+    lastDot = inputFileName.find_last_of(".")
+    reportFileName = OUTPUTDIR + inputFileName.substr(folderEnd + 1, lastDot - folderEnd - 1) + ".tsv"
+    reportFile = open(reportFileName, "w")
+    for i = 0 to plates.size()
+      plate = plates[i]
+      // Set path to the binary file
+      path = folder + plate.path
+      inputBinary = open(path, "rb")
+      if inputBinary.is_open()
+        matrix = readMatrixFromBinaryStream(inputBinary)
+        duration = calculateHeat(matrix.temperatures, plate.seconds, plate.difu, plate.dimension, plate.sensitivity, matrix.rows, matrix.columns, plate.stages, threadCount)
+
+        plate.elapsed = format_time(duration)
+        body = plate.path + "\t" + plate.seconds + "\t" + plate.difu + "\t" + plate.dimension + "\t" + plate.sensitivity + "\t" + plate.stages + "\t" + plate.elapsed + "\n"
+
+        if reportFile.is_open()
+          reportFile.write(body)
+        end if
+        lDot = plate.path.find_last_of(".")
+        reportBinName = OUTPUTDIR + plate.path.substr(0, lDot) + "-" + plate.stages + ".bin"
+
+        reportBin = open(reportBinName, "wb")
+        if reportBin.is_open()
+          writeMatrixToBinaryStream(reportBin, matrix)
+          reportBin.close()
+        end if
+        inputBinary.close()
+      else
+        print "Error: could not open file"
+        return EXIT_FAILURE
+      end if
+    end for
+    reportFile.close()
+  else
+    print "Error: invalid amount of arguments"
+    return EXIT_FAILURE
+  end if
+end procedure

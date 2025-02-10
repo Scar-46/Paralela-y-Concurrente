@@ -1,0 +1,70 @@
+ procedure sendStopCondition(platesSize, processCount, next_process, available_process, asigned_jobs_copy)
+   if next_process >= platesSize then
+     // Send stop condition
+     for i = 1 to processCount do
+       if i == available_process then
+         stop_condition = platesSize + 1
+         MPI_Send(stop_condition, 1, MPI_INT, i, 2, MPI_COMM_WORLD)
+       else
+         MPI_Send(platesSize, 1, MPI_INT, i, 2, MPI_COMM_WORLD)
+       end if
+     end for
+   else
+     // Send asigned_jobs
+     MPI_Send(asigned_jobs_copy, 1, MPI_INT, available_process, 2, MPI_COMM_WORLD)
+   end if
+ end procedure
+
+ procedure mapping(asigned_jobs, platesSize)
+   processCount = MPI_Comm_size(MPI_COMM_WORLD)
+   if asigned_jobs+1 < processCount then
+     // Since process 0 wont give work to itself
+     next_process = asigned_jobs + 1
+     // Send number of process
+     MPI_Send(next_process, 1, MPI_INT, next_process, 0, MPI_COMM_WORLD)
+     // Send "task"
+     MPI_Send(asigned_jobs, 1, MPI_INT, next_process, 1, MPI_COMM_WORLD)
+     // Send stop condition
+     sendStopCondition(platesSize, processCount, next_process, next_process, asigned_jobs + 1)
+   else
+     // Recive available process
+     available_process = MPI_Recv(1, MPI_INT, MPI_ANY_SOURCE, 3, MPI_COMM_WORLD)
+     // Send number of process
+     MPI_Send(available_process, 1, MPI_INT, available_process, 0, MPI_COMM_WORLD)
+     // Send "task"
+     MPI_Send(asigned_jobs, 1, MPI_INT, available_process, 1, MPI_COMM_WORLD)
+     next_process = asigned_jobs + 1
+     asigned_jobs_copy = asigned_jobs + 1
+     // So it doesnt overflow processCount
+     if asigned_jobs_copy >= processCount then
+       asigned_jobs_copy = 1
+     end if
+     // Send stop condition
+     sendStopCondition(platesSize, processCount, next_process, available_process, asigned_jobs_copy)
+   end if
+ end procedure
+
+ procedure allProcess(plates, folder, threadCount, reportFile, outDir)
+   platesSize = plates.size()
+   processNumber = MPI_Comm_rank(MPI_COMM_WORLD)
+   asigned_jobs = 0
+   for asigned_jobs = 0 to platesSize do
+     if processNumber == 0 then
+       // Send asigned_jobs
+       mapping(asigned_jobs, platesSize)
+     else
+       // Recive asigned_jobs
+       MPI_Recv(asigned_jobs, 1, MPI_INT, 0, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE)
+       if asigned_jobs == platesSize then
+         break
+       end if
+       // Recives number of the process that will calculate
+       calculate_process = MPI_Recv(1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE)
+       if calculate_process == processNumber then
+         // Calculate the plate and make the report
+         makeReport(plates, asigned_jobs, folder, threadCount, reportFile, outDir)
+         MPI_Send(processNumber, 1, MPI_INT, 0, 3, MPI_COMM_WORLD)
+       end if
+     end if
+   end for
+ end procedure

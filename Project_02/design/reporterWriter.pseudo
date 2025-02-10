@@ -1,0 +1,29 @@
+procedure makeReport(plates, index, folder, threadCount, reportFile, outDir)
+    plate = plates[index]
+    path = folder + plate.path
+    inputBinary = open(path, "rb")
+    if inputBinary != null
+      matrix = readMatrixFromBinaryStream(inputBinary)
+      duration = calculateHeat(matrix.temperatures, plate.seconds,
+        plate.difu, plate.dimension, plate.sensitivity, matrix.rows,
+        matrix.columns, plate.stages, threadCount)
+      plate.elapsed = format_time(duration)
+      body = plate.path + "\t" + plate.seconds + "\t" + plate.difu + "\t"
+        + plate.dimension + "\t" + plate.sensitivity + "\t"
+        + plate.stages + "\t" + plate.elapsed + "\n"
+      if reportFile != null
+        reportFile.write(body)
+        reportFile.flush()
+      reportBinName = outDir + plate.path[0:plate.path.find_last_of(".")]
+        + "-" + plate.stages + ".bin"
+      reportBin = open(reportBinName, "wb")
+      if reportBin != null
+        writeMatrixToBinaryStream(reportBin, matrix)
+        reportBin.close()
+      inputBinary.close()
+    else
+      std::cerr << "Error: could not open file" << std::endl
+      MPI_Finalize()
+      return
+    end if
+  end procedure

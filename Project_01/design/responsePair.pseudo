@@ -1,0 +1,24 @@
+///  @author Oscar Fernández Jiménez <OSCAR.FERNANDEZJIMENEZ@ucr.ac.cr>
+
+struct responsePair 
+  Dynamic request
+  Dynamic response
+  stopCondition
+end struct
+
+procedure responsePair()
+  request = null
+  response = null
+  stopCondition = true
+end procedure
+
+procedure responsePair(request, response)
+  request = request
+  response = response
+  stopCondition = false
+end procedure
+
+procedure operator==(other)
+  return request == other.request && response == other.response
+end procedure
+

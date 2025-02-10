@@ -1,0 +1,176 @@
+// Copyright 2023 by Oscar Fernández Jiménez
+
+struct GoldbachWebApp 
+  Dynamic solversQueue
+  Dynamic responseProducerQueue
+  Dynamic packerQueue
+  solversCount = thisPCThreads()
+  solversVector
+  Dynamic packer
+  Dynamic responseProducer
+  stopSolversBool
+  applicationURI = "/gold"
+end struct
+
+procedure run()
+  consumeForever()
+  return EXIT_SUCCESS
+end procedure
+
+procedure consume(data)
+  serveGoldbachSeries(data.request, data.response)
+end procedure
+
+procedure consumeForever()
+  while true
+    data = dequeue(consumingQueue)
+    if data.stopCondition == true
+      newData = new NumData<Celd*>
+      for i = 0 to solversCount
+        enqueue(solversQueue, newData)
+      end for
+      break
+    end if
+    consume(data)
+  end while
+end procedure
+
+procedure start()
+  solversQueue = new Queue<NumData<Celd*>*>
+  packerQueue = new Queue<NumData<Celd*>*>
+  responseProducerQueue = new Queue<std::vector<NumData<Celd*>*>*>
+  for i = 0 to solversCount
+    solver = new Gcalculator
+    solver.setConsumingQueue(solversQueue)
+    solver.setProducingQueue(packerQueue)
+    solvers.push_back(solver)
+    solvers[i].startThread()
+  end for
+  packer = new Packer<Celd*>
+  packer.setConsumingQueue(packerQueue)
+  packer.setProducingQueue(responseProducerQueue)
+  packer.startThread()
+  responseProducer = new ResponseProducer<Celd*>
+  responseProducer.setConsumingQueue(responseProducerQueue)
+  responseProducer.startThread()
+end procedure
+
+procedure stop()
+  // stop goldbach solvers
+  for i = 0 to solversCount
+    solvers[i].waitToFinish()
+    delete solvers[i]
+  end for
+  responseProducer.waitToFinish()
+  packer.waitToFinish()
+  delete responseProducer
+  delete packer
+  delete solversQueue
+  delete packerQueue
+  delete responseProducerQueue
+end procedure
+
+procedure getApplicationURI()
+  return applicationURI
+end procedure
+
+procedure handleHttpRequest(request, response)
+  if request.getMethod() == "GET" && request.getURI() == "/"
+    serveHomepage(request, response)
+  else
+    serveGoldbachSeries(request, response)
+  end if
+end procedure
+
+procedure serveHomepage(request, request)
+  // Set HTTP response metadata (headers)
+  response.setHeader("Server", "AttoServer v1.1")
+  response.setHeader("Content-type", "text/html; charset=ascii")
+
+  // Build the body of the response
+  title = "Goldbach serie"
+  response.body() << "<!DOCTYPE html>\n"
+    << "<html lang=\"en\">\n"
+    << "  <meta charset=\"ascii\"/>\n"
+    << "  <title>" << title << "</title>\n"
+    << "  <style>body {font-family: monospace}</style>\n"
+    << "  <h1>" << title << "</h1>\n"
+    << "  <form method=\"get\" action=\"/gold\">\n"
+    << "    <label for=\"numbers\">"
+    << "  Enter numbers separated by a comma:</label>\n"
+    << "    <input type=\"text\" id=\"numbers\" name=\"numbers\" required/>\n"
+    << "    <button type=\"submit\">Next</button>\n"
+    << "  </form>\n"
+    << "</html>\n"
+
+  // Send the response to the client (user agent)
+  response.send()
+  delete request
+  delete response
+end procedure
+
+
+procedure serveGoldbachSerie(response, request)
+  httpResponse.setHeader("Server", "AttoServer v1.0")
+  httpResponse.setHeader("Content-type", "text/html; charset=ascii")
+  smatch matches
+  regex inQuery("^(-?\\d+(?:%2C\\+*-?\\d+)*)$")
+  string URICopy = httpRequest.getURI()
+  if URICopy matches expected 
+    numbers = matches[1]
+    numbers = std::regex_replace(numbers, std::regex("%2C\\+*"), ",")
+    title = "Goldbach Series for: " + numbers
+    httpResponse.body() 
+    << "<!DOCTYPE html>\n"
+    << "<html lang=\"en\">\n"
+    << "  <meta charset=\"ascii\"/>\n"
+    << "  <title>" << title << "</title>\n"
+    << "  <style>body {font-family: monospace} .err {color: red}</style>\n"
+    << "  <h1>" << title << "</h1>\n"
+    << "  <div>"
+    delete httpRequest
+    // From here we have to send the numbers to the solvers
+    stringstream input_stringstream(numbers)
+    aux
+    celdVector
+    requestSize = 0
+    while getline(input_stringstream, aux, ',')
+      number = aux.c_str()
+      new_number = atoi(number)
+      errno = 0
+      if errno != 0
+        //Input number is not valid so it is not sended to the solvers
+      end if
+      newCeld = new Celd()
+      newCeld.setNum(new_number)
+      celdVector.push_back(newCeld)
+      requestSize = requestSize + 1
+    end while
+    for i = 0 to requestSize
+      newData = new NumData<Celd*>
+      newData.setRequestSize(requestSize)
+      newData.setStructData(celdVector[i])
+      newData.setResponseAdr(httpResponse)
+      newData.setRequestPosition(i)
+      solversQueue.enqueue(newData)
+    end for
+  end if else 
+    // Build the body for an invalid request
+    string title = "Invalid request"
+    httpResponse.body() << "<!DOCTYPE html>\n"
+      << "<html lang=\"en\">\n"
+      << "  <meta charset=\"ascii\"/>\n"
+      << "  <title>" << title << "</title>\n"
+      << "  <style>body {font-family: monospace} .err {color: red}</style>\n"
+      << "  <h1 class=\"err\">" << title << "</h1>\n"
+      << "  <p>Invalid request for a Goldbach Serie</p>\n"
+      << "  <p>Input must be in format: Number,Number,...</p>"
+      << "  <p>No other characters,"
+      << "   like letters and blank spaces are allowed</p>\n"
+      << "  <hr><p><a href=\"/\">Back</a></p>\n"
+      << "</html>\n"
+      httpResponse.send()
+      delete httpRequest
+      delete httpResponse
+  end else
+end procedure

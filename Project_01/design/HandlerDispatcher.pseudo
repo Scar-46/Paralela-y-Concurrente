@@ -1,0 +1,27 @@
+// Copyright 2023 OSCAR.FERNANDEZJIMENEZ@ucr.ac.cr
+
+
+procedure run()
+  consumeForever(consumingQueue)
+  return Success
+end procedure
+
+procedure consumeForever(consumingQueue)
+  while true
+    data = consumingQueue.dequeue()
+    if data.stopCondition == true
+      for pair in toQueues
+        pair.second.enqueue(stopCondition)
+      end for
+      break
+    end if
+    consume(data)
+  end while
+end procedure
+
+procedure extractKey(data)
+  stringEnd = data.request->getURI().find_first_of('?')
+  key = data.request->getURI().substr(0, stringEnd)
+  return key
+end procedure
+
