@@ -15,4 +15,9 @@ suma de Goldbach.
 Para más información puede consultar el [README](Project_01/README.md) de este
 proyecto.
 
-## Proyecto 02  
+## Proyecto 02: Simulación de Equilibrio Térmico en una Lámina Rectangular
+
+Este proyecto consiste en una simulación computacional para determinar el momento en el que una lámina rectangular alcanza su equilibrio térmico cuando se le aplica calor constante en su borde.
+
+Para más información puede consultar el [README](Project_02/README.md) de este
+proyecto.
